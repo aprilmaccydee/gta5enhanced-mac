@@ -7,6 +7,8 @@
 /memory_only/*
 !/prototype/
 /prototype/*
+!/prototype/lml/
+/prototype/lml/*
 !/prototype/graphics/
 /prototype/graphics/*
 !/prototype/graphics/vendor/
@@ -30,11 +32,17 @@
 !/memory_only/core_queue_callback.bin
 !/memory_only/core_queue_callback.c
 !/memory_only/image_checks.py
+!/memory_only/game_profiles.py
+!/memory_only/inspect_lml_bootstrap.py
+!/memory_only/install_lml_bootstrap.py
 !/memory_only/install_loader_hook.py
+!/memory_only/launch_gta_standalone.py
 !/memory_only/paths.py
 !/memory_only/queue_thunks.h
 !/memory_only/watch_gta.py
 !/memory_only/watch_gta_queue.py
+!/memory_only/watch_gta_lml.py
+!/memory_only/watch_gta_standalone.py
 !/prototype/core_compat.c
 !/prototype/graphics/queue_callback_fixture.h
 !/prototype/graphics/queue_hook_probe.c
@@ -53,3 +61,10 @@
 !/prototype/graphics/vendor/minhook/src/trampoline.h
 !/prototype/loader_probe.c
 !/prototype/run_tests.py
+!/prototype/test_standalone_launch.py
+!/prototype/lml/fake_dependency.c
+!/prototype/lml/lml_callback.bin
+!/prototype/lml/lml_callback.c
+!/prototype/lml/lml_context.h
+!/prototype/lml/lml_probe.c
+!/prototype/lml/run_fixture.py

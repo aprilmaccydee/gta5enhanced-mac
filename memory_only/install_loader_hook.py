@@ -18,6 +18,9 @@ ROOT = HERE.parent
 spec = importlib.util.spec_from_file_location('gtm_fixed_image_checks', HERE / 'image_checks.py')
 checks = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(checks)
+profile_spec = importlib.util.spec_from_file_location('gtm_game_profiles', HERE / 'game_profiles.py')
+profiles = importlib.util.module_from_spec(profile_spec)
+profile_spec.loader.exec_module(profiles)
 SLOT = checks.KERNELBASE + 0xc9e40
 ORIGINAL = checks.NTDLL + 0x15680
 CALLBACK = HERE / 'core_callback.bin'
@@ -50,6 +53,10 @@ def install_game(debugger):
 
 def install_queue_game(debugger):
     _install(debugger, False, queue=True)
+
+
+def install_queue_game_standalone(debugger):
+    _install(debugger, False, queue=True, profile='standalone')
 
 
 def restore_game(debugger):
@@ -114,7 +121,7 @@ def _restore_game(debugger):
         print('GTM_RESTORE_RESULT ' + ('success' if success and safe_resume and detached else 'failure'), flush=True)
 
 
-def _install(debugger, fixture, queue=False):
+def _install(debugger, fixture, queue=False, profile='rockstar'):
     target = debugger.GetSelectedTarget()
     process = target.GetProcess()
     allocation = lldb.LLDB_INVALID_ADDRESS
@@ -140,8 +147,8 @@ def _install(debugger, fixture, queue=False):
             raise RuntimeError('Expected local executable mapping is absent')
         if not fixture and 'n' + str(checks.APPLE_D3D12) in mappings.splitlines():
             raise RuntimeError('D3D12 is already mapped; startup was missed and this hook cannot retry initialization')
-        if not fixture and hashlib.sha256(executable.read_bytes()).hexdigest() != GAME_SHA256:
-            raise RuntimeError('Game executable fingerprint changed')
+        if not fixture:
+            profiles.validate_game_file(executable, profile)
         if queue:
             for name, expected_hash in QUEUE_NATIVE_HASHES.items():
                 if hashlib.sha256((checks.CX / name).read_bytes()).hexdigest() != expected_hash:
@@ -156,6 +163,8 @@ def _install(debugger, fixture, queue=False):
         checks.validate_image(process, 0x140000000, executable)
         checks.validate_image(process, checks.KERNELBASE, checks.CX / 'lib/wine/x86_64-windows/kernelbase.dll')
         checks.validate_image(process, checks.NTDLL, checks.CX / 'lib/wine/x86_64-windows/ntdll.dll')
+        if not fixture and profile == 'standalone':
+            profiles.validate_pid_import(process, checks, mappings.splitlines())
         if struct.unpack('<Q', checks.read(process, SLOT, 8))[0] != ORIGINAL:
             raise RuntimeError('Loader import is not the expected original function')
         if target.GetNumBreakpoints():
@@ -179,6 +188,9 @@ def _install(debugger, fixture, queue=False):
                   'callback_sha256':callback_sha256, 'slot':SLOT, 'original':ORIGINAL,
                   'readable':region.IsReadable(), 'writable':region.IsWritable(), 'executable':region.IsExecutable()}
         record['shared_queue_forwarding'] = queue
+        record['game_profile'] = 'fixture' if fixture else profile
+        if not fixture:
+            record['game_sha256'] = profiles.game_hash(profile)
         if queue:
             record['native_graphics_hashes'] = QUEUE_NATIVE_HASHES
         prefix = 'queue-game-hook-' if queue else ('fixture-hook-' if fixture else 'game-hook-')

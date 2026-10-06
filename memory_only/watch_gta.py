@@ -122,7 +122,7 @@ def run_debugger(pid, directory, record):
     require(matching_pids() == [pid], "Target identity changed before debugger attachment")
     argv = ["/usr/bin/xcrun", "lldb", "--batch", "--no-use-colors", "--no-lldbinit", "--attach-pid", str(pid),
             "-o", "command script import " + json.dumps(str(HELPER)),
-            "-o", f"script install_loader_hook.{INSTALLER_ENTRY}(lldb.debugger)"]
+            "-o", f"script {HELPER.stem}.{INSTALLER_ENTRY}(lldb.debugger)"]
     record["lldb_argv"] = argv
     log = directory / "lldb.log"
     record["lldb_log"] = str(log)
